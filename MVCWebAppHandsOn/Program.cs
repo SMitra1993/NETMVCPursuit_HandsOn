@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using MVCWebAppHandsOn.Data;
+using MVCWebAppHandsOn.Services;
 
 namespace MVCWebAppHandsOn
 {
@@ -12,6 +13,7 @@ namespace MVCWebAppHandsOn
             options.UseSqlServer(builder.Configuration.GetConnectionString("MVCWebAppContext") ??
                 throw new InvalidOperationException("Connection string 'MVCWebAppContext' not found.")));
             // Add services to the container.
+            builder.Services.AddScoped<IStudentDetailService, StudentDetailService>();
             builder.Services.AddControllersWithViews();
             //builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 

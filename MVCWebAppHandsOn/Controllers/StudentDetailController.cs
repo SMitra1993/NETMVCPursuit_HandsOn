@@ -2,31 +2,23 @@
 using Microsoft.EntityFrameworkCore;
 using MVCWebAppHandsOn.Data;
 using MVCWebAppHandsOn.Models;
+using MVCWebAppHandsOn.Services;
 
 namespace MVCWebAppHandsOn.Controllers
 {
     public class StudentDetailController : Controller
     {
-        private readonly StudentContext _context;
+        private readonly IStudentDetailService _service;
 
-        public StudentDetailController(StudentContext context)
+        public StudentDetailController(IStudentDetailService service)
         {
-            _context = context;
+            _service = service;
         }
         public async Task<IActionResult> Index(string searchString)
         {
             ViewData["CurrentFilter"] = searchString;
-            if (!String.IsNullOrEmpty(searchString))
-            {
-                return _context.Students != null ?
-                         View(await _context.Students.Where(x => x.FirstName.Contains(searchString) || 
-                         x.LastName.Contains(searchString) || x.Email.Contains(searchString)).ToListAsync()) :
-                         Problem("Entity set 'StudentContext.Students'  is null.");
-            }
-
-            return _context.Students != null ?
-                        View(await _context.Students.ToListAsync()) :
-                        Problem("Entity set 'StudentContext.Students'  is null.");
+            var student = await _service.GetAllStudents(searchString);
+            return View(student);
         }
 
         public IActionResult Create()
@@ -40,8 +32,7 @@ namespace MVCWebAppHandsOn.Controllers
         {
             if(ModelState.IsValid)
             {
-                _context.Add(student);
-                await _context.SaveChangesAsync();
+                await _service.CreateStudent(student);
                 return RedirectToAction(nameof(Index));
             }
             return View(student);
@@ -49,12 +40,7 @@ namespace MVCWebAppHandsOn.Controllers
 
         public async Task<IActionResult> Edit(int id)
         {
-            if (id == null || _context.Students == null)
-            {
-                return NotFound();
-            }
-
-            var student = await _context.Students.FindAsync(id);
+            var student = await _service.FindStudent(id);
             if(student == null)
             {
                 return NotFound();
@@ -72,34 +58,22 @@ namespace MVCWebAppHandsOn.Controllers
             }
             if (ModelState.IsValid)
             {
-                try
+                var result = await _service.UpdateStudent(id, student);
+                if (result != null)
                 {
-                    _context.Update(student);
-                    await _context.SaveChangesAsync();
+                    return RedirectToAction(nameof(Index));
                 }
-                catch (DbUpdateConcurrencyException)
+                else
                 {
-                    if((_context.Students?.Any(x => x.Id == id)).GetValueOrDefault())
-                    {
-                        return NotFound();
-                    } else
-                    {
-                        throw;
-                    }
+                    return NotFound();
                 }
-                return RedirectToAction(nameof(Index));
             }
             return View(student);
         }
 
         public async Task<IActionResult> Details(int? id)
         {
-            if(id == null  || _context.Students == null)
-            {
-                return NotFound();
-            }
-
-            var student = _context.Students.FirstOrDefault(x => x.Id == id);
+            var student = await _service.FindStudent(id);
             if(student == null)
             {
                 return NotFound();
@@ -108,14 +82,9 @@ namespace MVCWebAppHandsOn.Controllers
             return View(student);
         }
 
-        public async Task<IActionResult> Delete(int? id)
+        public async Task<IActionResult> Delete(int id)
         {
-            if (id == null || _context.Students == null)
-            {
-                return NotFound();
-            }
-
-            var student = await _context.Students.FirstOrDefaultAsync(x => x.Id == id);
+            var student = await _service.FindStudent(id);
             if(student == null)
             {
                 return NotFound();
@@ -126,18 +95,9 @@ namespace MVCWebAppHandsOn.Controllers
 
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int? id)
+        public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            if (_context.Students == null)
-            {
-                return Problem("Entity set 'StudentContext.Students'  is null.");
-            }
-            var student = await _context.Students.FindAsync(id);
-            if (student != null)
-            {
-                _context.Students.Remove(student);
-            }
-            await _context.SaveChangesAsync();
+            await _service.DeleteStudent(id);
             return RedirectToAction(nameof(Index));
         }
     }
