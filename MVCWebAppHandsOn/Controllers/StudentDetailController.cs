@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.EntityFrameworkCore;
 using MVCWebAppHandsOn.Data;
+using MVCWebAppHandsOn.Filter;
 using MVCWebAppHandsOn.Models;
 using MVCWebAppHandsOn.Services;
 
@@ -14,6 +16,8 @@ namespace MVCWebAppHandsOn.Controllers
         {
             _service = service;
         }
+
+        [HandleJson]
         public async Task<IActionResult> Index(string searchString)
         {
             ViewData["CurrentFilter"] = searchString;

@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using MVCWebAppHandsOn.Data;
+using MVCWebAppHandsOn.Filter;
 using MVCWebAppHandsOn.Services;
 
 namespace MVCWebAppHandsOn
@@ -14,9 +15,12 @@ namespace MVCWebAppHandsOn
                 throw new InvalidOperationException("Connection string 'MVCWebAppContext' not found.")));
             // Add services to the container.
             builder.Services.AddScoped<IStudentDetailService, StudentDetailService>();
-            builder.Services.AddControllersWithViews();
+            //builder.Services.AddControllersWithViews();
             //builder.Services.AddDatabaseDeveloperPageExceptionFilter();
-
+            builder.Services.AddControllersWithViews(options =>
+            {
+                options.Filters.Add(new HandleJsonAttribute());
+            });
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
